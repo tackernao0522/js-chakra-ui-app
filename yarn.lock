@@ -1351,12 +1351,27 @@
     "compute-scroll-into-view" "1.0.14"
     "copy-to-clipboard" "3.3.1"
 
+"@chakra-ui/icon@1.1.0":
+  "integrity" "sha512-OvO0auLIvL39nTf8IW2wnu0x/9whezRqazUHVBJnSsgkpatChhz3RfqzErGmWaOnTyw7omTt6PFfD1YgY40cIQ=="
+  "resolved" "https://registry.npmjs.org/@chakra-ui/icon/-/icon-1.1.0.tgz"
+  "version" "1.1.0"
+  dependencies:
+    "@chakra-ui/utils" "1.1.0"
+
 "@chakra-ui/icon@1.1.2":
   "integrity" "sha512-Gp/G0CZ8X8RWJWrs8jUm1dfA+5lS4zgNd078zQAj+yppnyhRGEGuZ6jAVJowtF+gbljZttmZwfXUgV3WpKnT/A=="
   "resolved" "https://registry.npmjs.org/@chakra-ui/icon/-/icon-1.1.2.tgz"
   "version" "1.1.2"
   dependencies:
     "@chakra-ui/utils" "1.3.0"
+
+"@chakra-ui/icons@^1.0.4":
+  "integrity" "sha512-bFbyXGz+41Sf2/hcyOZbba1MXfYSrwdr2ph1r/qtTWrl0FPFpg5yPC9zPP6wtdf3+MtumbK9SxMyYneZ8KKJRA=="
+  "resolved" "https://registry.npmjs.org/@chakra-ui/icons/-/icons-1.0.4.tgz"
+  "version" "1.0.4"
+  dependencies:
+    "@chakra-ui/icon" "1.1.0"
+    "@types/react" "^17.0.0"
 
 "@chakra-ui/image@1.0.8":
   "integrity" "sha512-WSVFFvx0bJ7qdJslBrj9FGFJvOLXk05rQC+tL+lPI8/jqhzj6EwUzsQ4qXlwcjo8KR5LviMA8zZsaoEZ+kAUqw=="
@@ -1691,6 +1706,17 @@
   dependencies:
     "@chakra-ui/hooks" "1.1.5"
     "@chakra-ui/utils" "1.3.0"
+
+"@chakra-ui/utils@1.1.0":
+  "integrity" "sha512-QiX6HqQpv+oE4lRaPhDYRhrYI2ijAsNDpKhZeOeUh6hBXWIayzMB62iN0QANeMqynPz413TU5RR2c+WGwyax6g=="
+  "resolved" "https://registry.npmjs.org/@chakra-ui/utils/-/utils-1.1.0.tgz"
+  "version" "1.1.0"
+  dependencies:
+    "@types/lodash.mergewith" "4.6.6"
+    "@types/object-assign" "4.0.30"
+    "css-box-model" "1.2.1"
+    "lodash.mergewith" "4.6.2"
+    "object-assign" "4.1.1"
 
 "@chakra-ui/utils@1.3.0":
   "integrity" "sha512-MezHglxjRaAZIQDVAi1uOMVNd4a0zKGmV4cvp8+r3xTmGMU/XJCC5J49qufEqLLJbR31Y7UiCRTz86O66s1r5A=="
@@ -8705,7 +8731,7 @@
   "resolved" "https://registry.npmjs.org/nwsapi/-/nwsapi-2.2.0.tgz"
   "version" "2.2.0"
 
-"object-assign@^4.0.1", "object-assign@^4.1.0", "object-assign@^4.1.1":
+"object-assign@^4.0.1", "object-assign@^4.1.0", "object-assign@^4.1.1", "object-assign@4.1.1":
   "integrity" "sha1-IQmtx5ZYh8/AXLvUQsrIv7s2CGM="
   "resolved" "https://registry.npmjs.org/object-assign/-/object-assign-4.1.1.tgz"
   "version" "4.1.1"

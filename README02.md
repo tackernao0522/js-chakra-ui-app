@@ -2,10 +2,6 @@
 
 `$ npm i @chakra-ui/react @emotion/react@^11 @emotion/styled@^11 framer-motion@^4 or $ yarn add @chakra-ui/react @emotion/react@^11 @emotion/styled@^11 framer-motion@^4`<br>
 
-## Chakra Iconの導入
-
-`$ npm i @chakra-ui/icons`<br>
-
 + `App.tsx`を編集<br>
 
 ```
@@ -314,4 +310,137 @@ export const HomeRoutes = [
         children: <Page404 />
     },
 ]
+```
+
+## ヘッダーメニューの作成
+
++ `src/components/organisms`ディレクトリを作成<br>
+
++ `src/components/organisms/layout`ディレクトリを作成<br>
+
++ `src/components/organisms/layout/Header.tsx`コンポーネントを作成<br>
+
+```
+import { memo, VFC } from "react";
+
+export const Header: VFC = memo(() => {
+    return <div style={{ height: "50px", backgroundColor: "teal"}} ></div>
+});
+```
+
++ `src/components/templates`ディレクトリを作成<br>
+
++ `src/components/templates/HeaderLayout.tsx`コンポーネントを作成<br>
+
+```
+import { memo, ReactNode, VFC } from "react";
+import { Header } from "../organisms/layout/Header";
+
+type Props = {
+    children: ReactNode;
+}
+
+export const HeaderLayout: VFC<Props> = memo((props) => {
+    const { children } = props;
+    return (
+        <>
+            <Header />
+            {children}
+        </>
+    )
+})
+```
+
++ `src/router/Router.tsx`を編集<br>
+
+```
+import { Route, Switch } from "react-router-dom";
+import { memo, VFC } from "react";
+
+import { Login } from "../components/pages/Login";
+import { HomeRoutes } from "./HomeRoutes";
+import { Page404 } from "../components/pages/Page404";
+import { HeaderLayout } from "../components/templates/HeaderLayout";
+
+export const Router: VFC = memo(() => {
+    return (
+        <Switch>
+            <Route exact path="/">
+                <Login />
+            </Route>
+            <Route path="/home" render={({ match: { url } }) => (
+                <Switch>
+                    {HomeRoutes.map((route) => (
+                        <Route
+                            key={route.path}
+                            exact={route.exact}
+                            path={`${url}${route.path}`}
+                        >
+                            <HeaderLayout>{route.children}</HeaderLayout>
+                        </Route>
+                    ))}
+                </Switch>
+            )} />
+            <Route path="*">
+                <Page404 />
+            </Route>
+        </Switch>
+    )
+})
+```
+
+## Chakra Iconの導入
+
+`$ npm i @chakra-ui/icons`<br>
+
++ `src/components/Header.tsx`を編集<br>
+
+```
+import { Box, Button, Drawer, DrawerContent, DrawerBody, DrawerOverlay, Flex, Heading, IconButton, Link, useDisclosure } from "@chakra-ui/react";
+import { memo, VFC } from "react";
+import { HamburgerIcon } from "@chakra-ui/icons"
+
+export const Header: VFC = memo(() => {
+    const { isOpen, onOpen, onClose } = useDisclosure();
+    return (
+        <>
+            <Flex
+                as="nav"
+                bg="teal.500"
+                color="gray.50"
+                align="center"
+                justify="space-between"
+                padding={{ base: 3, md: 5 }}
+            >
+                <Flex align="center" as="a" mr={8} _hover={{ cursor: "pointer" }}>
+                    <Heading as="h1" fontSize={{ base: "md", md: "lg" }}>ユーザー管理アプリ</Heading>
+                </Flex>
+                <Flex align="center" fontSize="sm" flexGrow={2} display={{ base: "none", md: "flex" }}>
+                    <Box pr={4}>
+                        <Link>ユーザー一覧</Link>
+                    </Box>
+                    <Link>設定</Link>
+                </Flex>
+                <IconButton
+                    aria-label="メニューボタン"
+                    icon={<HamburgerIcon />}
+                    size="sm" variant="unstyled"
+                    display={{ base: "block", md: "none" }}
+                    onClick={onOpen}
+                />
+            </Flex>
+            <Drawer placement="left" size="xs" onClose={onClose} isOpen={isOpen}>
+                <DrawerOverlay>
+                    <DrawerContent>
+                        <DrawerBody p={0} bg="gray.100">
+                            <Button w="100%">TOP</Button>
+                            <Button w="100%">ユーザー一覧</Button>
+                            <Button w="100%">設定</Button>
+                        </DrawerBody>
+                    </DrawerContent>
+                </DrawerOverlay>
+            </Drawer>
+        </>
+    );
+});
 ```
