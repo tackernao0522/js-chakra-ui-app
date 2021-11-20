@@ -677,6 +677,7 @@ export const MenuDrawer: VFC<Props> = memo((props) => {
 + `src/components/organisms/layout/Header.tsx`を編集<br>
 
 ```
+/* eslint-disable react-hooks/exhaustive-deps */
 import { Box, Flex, Heading, Link, useDisclosure } from "@chakra-ui/react";
 import { memo, useCallback, VFC } from "react";
 import { useHistory } from "react-router";
@@ -784,6 +785,284 @@ export const Login: VFC = memo(() => {
         <Stack spacing={6} py={4} px={10}>
           <Input placeholder="ユーザーID" />
           <PrimaryButton>ログイン</PrimaryButton>
+        </Stack>
+      </Box>
+    </Flex>
+  );
+});
+```
+
+## ログイン機能の実装
+
++ axiosをインストール<br>
+
++ `$ npm install axios --save or $ yarn add axios --save`<br>
+
++ `src/components/pages/Login.tsx`を編集<br>
+
+```
+import { Box, Flex, Heading, Input, Divider, Stack } from "@chakra-ui/react";
+import { ChangeEvent, memo, useState, VFC } from "react";
+import { PrimaryButton } from "../atoms/button/PrimaryButton";
+
+export const Login: VFC = memo(() => {
+  const [userId, setUserId] = useState(""); // テキストボックスなので初期値は空文字
+
+  const onChangeUserId = (e: ChangeEvent<HTMLInputElement>) =>
+    setUserId(e.target.value);
+
+  return (
+    <Flex align="center" justify="center" height="100vh">
+      <Box bg="white" w="sm" p={4} borderRadius="md" shadow="md">
+        <Heading as="h1" size="lg" textAlign="center">
+          ユーザー管理アプリ
+        </Heading>
+        <Divider my={4} />
+        <Stack spacing={6} py={4} px={10}>
+          <Input
+            placeholder="ユーザーID"
+            value={userId}
+            onChange={onChangeUserId}
+          />
+          <PrimaryButton>ログイン</PrimaryButton>
+        </Stack>
+      </Box>
+    </Flex>
+  );
+});
+```
+
++ `src/hooks`ディレクトリを作成<br>
+
++ `src/types`ディレクトリを作成<br>
+
++ `src/types/api`ディレクトリを作成<br>
+
++ `src/types/api/user.ts`ファイルを作成<br>
+
+```
+export type User = {
+  id: number;
+  name: string;
+  username: string;
+  email: string;
+  address: {
+    street: string;
+    suite: string;
+    city: string;
+    zipcode: string;
+    geo: {
+      lat: string;
+      lng: string;
+    }
+  },
+  phone: string;
+  website: string;
+  company: {
+    name: string;
+    catchPhrase: string;
+    bs: string;
+  }
+}
+```
+
++ `src/hooks/useAuth.ts`ファイルを作成<br>
+
+```
+import axios from "axios";
+import { useCallback, useState } from "react"
+import { useHistory } from "react-router-dom";
+import { User } from "../types/api/user";
+
+export const useAuth = () => {
+  const history = useHistory();
+
+  const [loading, setLoading] = useState(false);
+
+  const login = useCallback((id: string) => {
+    setLoading(true);
+
+    axios.get<User>(`https://jsonplaceholder.typicode.com/users/${id}`).then((res) => {
+      if (res.data) {
+        history.push("/home");
+      } else {
+        alert("ユーザーが見つかりません");
+      }
+    })
+      .catch(() => alert("ログインできません"))
+      .finally(() => setLoading(false));
+  }, [history]);
+  return { login, loading }
+}
+```
+
++ `tsconfig.json`を編集<br>
+
+```
+{
+  "compilerOptions": {
+    "target": "es5",
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext",
+      "ES2018" // 追記
+    ],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "noFallthroughCasesInSwitch": true,
+    "module": "esnext",
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx"
+  },
+  "include": [
+    "src"
+  ]
+}
+```
+
++ `src/components/atoms/button/PrimaryButton.tsx`を編集<br>
+
+```
+import { Button } from "@chakra-ui/button";
+import { memo, ReactNode, VFC } from "react";
+
+type Props = {
+  children: ReactNode;
+  onClick: () => void;
+};
+
+export const PrimaryButton: VFC<Props> = memo(props => {
+  const { children, onClick } = props;
+
+  return (
+    <Button
+      bg="teal.400"
+      color="white"
+      _hover={{ opacity: 0.8 }}
+      onClick={onClick}
+    >
+      {children}
+    </Button>
+  );
+});
+```
+
++ `src/components/pages/Login.tsx`を編集<br>
+
+```
+import { Box, Flex, Heading, Input, Divider, Stack } from "@chakra-ui/react";
+import { ChangeEvent, memo, useState, VFC } from "react";
+import { useAuth } from "../../hooks/useAuth";
+import { PrimaryButton } from "../atoms/button/PrimaryButton";
+
+export const Login: VFC = memo(() => {
+  const { login, loading } = useAuth();
+
+  const [userId, setUserId] = useState(""); // テキストボックスなので初期値は空文字
+
+  const onChangeUserId = (e: ChangeEvent<HTMLInputElement>) =>
+    setUserId(e.target.value);
+
+  const onClickLogin = () => login(userId);
+
+  return (
+    <Flex align="center" justify="center" height="100vh">
+      <Box bg="white" w="sm" p={4} borderRadius="md" shadow="md">
+        <Heading as="h1" size="lg" textAlign="center">
+          ユーザー管理アプリ
+        </Heading>
+        <Divider my={4} />
+        <Stack spacing={6} py={4} px={10}>
+          <Input
+            placeholder="ユーザーID"
+            value={userId}
+            onChange={onChangeUserId}
+          />
+          <PrimaryButton onClick={onClickLogin}>ログイン</PrimaryButton>
+        </Stack>
+      </Box>
+    </Flex>
+  );
+});
+```
+
++ `src/components/atoms/button/PrimaryButton.tsx`を編集<br>
+
+```
+import { Button } from "@chakra-ui/button";
+import { memo, ReactNode, VFC } from "react";
+
+type Props = {
+  children: ReactNode;
+  disabled?: boolean;
+  loading?: boolean;
+  onClick: () => void;
+};
+
+export const PrimaryButton: VFC<Props> = memo(props => {
+  const { children, disabled = false, loading = false, onClick } = props;
+
+  return (
+    <Button
+      bg="teal.400"
+      color="white"
+      _hover={{ opacity: 0.8 }}
+      disabled={disabled || loading}
+      isLoading={loading}
+      onClick={onClick}
+    >
+      {children}
+    </Button>
+  );
+});
+```
+
++ `src/components/pages/Login.tsx`を編集<br>
+
+```
+import { Box, Flex, Heading, Input, Divider, Stack } from "@chakra-ui/react";
+import { ChangeEvent, memo, useState, VFC } from "react";
+import { useAuth } from "../../hooks/useAuth";
+import { PrimaryButton } from "../atoms/button/PrimaryButton";
+
+export const Login: VFC = memo(() => {
+  const { login, loading } = useAuth();
+
+  const [userId, setUserId] = useState(""); // テキストボックスなので初期値は空文字
+
+  const onChangeUserId = (e: ChangeEvent<HTMLInputElement>) =>
+    setUserId(e.target.value);
+
+  const onClickLogin = () => login(userId);
+
+  return (
+    <Flex align="center" justify="center" height="100vh">
+      <Box bg="white" w="sm" p={4} borderRadius="md" shadow="md">
+        <Heading as="h1" size="lg" textAlign="center">
+          ユーザー管理アプリ
+        </Heading>
+        <Divider my={4} />
+        <Stack spacing={6} py={4} px={10}>
+          <Input
+            placeholder="ユーザーID"
+            value={userId}
+            onChange={onChangeUserId}
+          />
+          <PrimaryButton
+            disabled={userId === ""}
+            loading={loading}
+            onClick={onClickLogin}
+          >
+            ログイン
+          </PrimaryButton>
         </Stack>
       </Box>
     </Flex>
