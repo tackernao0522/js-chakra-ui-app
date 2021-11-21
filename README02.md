@@ -1069,3 +1069,66 @@ export const Login: VFC = memo(() => {
   );
 });
 ```
+
+## メッセージ表示機能の実装
+
++ `src/hooks/useMessage.ts`ファイルを作成<br>
+
+```
+import { useToast } from "@chakra-ui/react";
+import { useCallback } from "react";
+
+type Props = {
+  title: string;
+  status: "info" | "warning" | "success" | "error"; // この中の文字列しか受け取れない方になる
+}
+
+export const useMessage = () => {
+  const toast = useToast();
+
+  const showMessage = useCallback((props: Props) => {
+    const { title, status } = props;
+    toast({
+      title,
+      status,
+      position: "top",
+      duration: 2000,
+      isClosable: true
+    })
+  }, [toast]);
+  return { showMessage }
+}
+```
+
++ `src/hooks/useAuth.ts`を編集<br>
+
+```
+import axios from "axios";
+import { useCallback, useState } from "react"
+import { useHistory } from "react-router-dom";
+import { User } from "../types/api/user";
+import { useMessage } from "./useMessage";
+
+export const useAuth = () => {
+  const history = useHistory();
+  const { showMessage } = useMessage();
+
+  const [loading, setLoading] = useState(false);
+
+  const login = useCallback((id: string) => {
+    setLoading(true);
+
+    axios.get<User>(`https://jsonplaceholder.typicode.com/users/${id}`).then((res) => {
+      if (res.data) {
+        showMessage({ title: "ログインしました", status: "success" })
+        history.push("/home");
+      } else {
+        showMessage({ title: "ユーザーが見つかりません", status: "error" })
+      }
+    })
+      .catch(() => showMessage({ title: "ログインできません", status: "error" }))
+      .finally(() => setLoading(false));
+  }, [history, showMessage]);
+  return { login, loading }
+}
+```
