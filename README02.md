@@ -1132,3 +1132,129 @@ export const useAuth = () => {
   return { login, loading }
 }
 ```
+
+## ユーザー一覧画面の作成<br>
+
++ `src/components/pages/UserManagement.tsx`を編集<br>
+
+```
+import { Wrap, WrapItem } from "@chakra-ui/react";
+import { memo, VFC } from "react";
+
+export const UserManagement: VFC = memo(() => {
+  return (
+    <Wrap spacing="30px">
+      {[...Array(10)].map(() =>
+        <WrapItem>
+          <div
+            style={{ width: "100px", height: "100px", backgroundColor: "teal" }}
+          />
+        </WrapItem>
+      )}
+    </Wrap>
+  );
+});
+```
+
++ `src/components/pages/UserManagement.tsx`を再編集<br>
+
+```
+import { Box, Image, Stack, Text, Wrap, WrapItem } from "@chakra-ui/react";
+import { memo, VFC } from "react";
+
+export const UserManagement: VFC = memo(() => {
+  return (
+    <Wrap p={{ base: 4, md: 10 }}>
+      <WrapItem>
+        <Box
+          w="260px"
+          h="260px"
+          bg="white"
+          borderRadius="10px"
+          shadow="md"
+          p={4}
+          _hover={{ cursor: "pointer", opacity: 0.8 }}
+        >
+          <Stack textAlign="center">
+            <Image
+              borderRadius="full"
+              boxSize="160px"
+              src="https://source.unsplash.com/random"
+              alt="プロフィール画像"
+              m="auto"
+            />
+            <Text fontSize="lg" fontWeight="bold">たかぼー</Text>
+            <Text fontSize="sm" color="gray">Takaki Nakamura</Text>
+          </Stack>
+        </Box>
+      </WrapItem>
+    </Wrap>
+  );
+});
+```
+
++ `src/components/organisms/user`ディレクトリを作成<br>
+
++ `src/components/organinsms/user/UserCard.tsx`コンポーネントを作成<br>
+
+```
+import { Image } from "@chakra-ui/image";
+import { Box, Stack, Text } from "@chakra-ui/layout";
+import { memo, VFC } from "react";
+
+type Props = {
+  imageUrl: string;
+  userName: string;
+  fullName: string;
+};
+
+export const UserCard: VFC<Props> = memo(props => {
+  const { imageUrl, userName, fullName } = props;
+
+  return (
+    <Box
+      w="260px"
+      h="260px"
+      bg="white"
+      borderRadius="10px"
+      shadow="md"
+      p={4}
+      _hover={{ cursor: "pointer", opacity: 0.8 }}
+    >
+      <Stack textAlign="center">
+        <Image
+          borderRadius="full"
+          boxSize="160px"
+          src={imageUrl}
+          alt={userName}
+          m="auto"
+        />
+        <Text fontSize="lg" fontWeight="bold">
+          {userName}
+        </Text>
+        <Text fontSize="sm" color="gray">
+          {fullName}
+        </Text>
+      </Stack>
+    </Box>
+  );
+});
+```
+
++ `src/components/pages/UserManagement.tsx`を編集<br>
+
+```
+import { Wrap, WrapItem } from "@chakra-ui/react";
+import { memo, VFC } from "react";
+import { UserCard } from "../organisms/user/UserCard";
+
+export const UserManagement: VFC = memo(() => {
+  return (
+    <Wrap p={{ base: 4, md: 10 }}>
+      <WrapItem>
+        <UserCard imageUrl="https://source.unsplash.com/random" userName="たかぼー" fullName="Takaki Nakamura" />
+      </WrapItem>
+    </Wrap>
+  );
+});
+```
