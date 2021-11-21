@@ -1244,17 +1244,106 @@ export const UserCard: VFC<Props> = memo(props => {
 + `src/components/pages/UserManagement.tsx`を編集<br>
 
 ```
-import { Wrap, WrapItem } from "@chakra-ui/react";
-import { memo, VFC } from "react";
+/* eslint-disabled react-hooks/exhaustive-deps */
+import { Center, Wrap, Spinner, WrapItem } from "@chakra-ui/react";
+import { memo, useEffect, VFC } from "react";
+import { useAllUsers } from "../../hooks/useAllUsers";
 import { UserCard } from "../organisms/user/UserCard";
 
 export const UserManagement: VFC = memo(() => {
+  const { getUsers, users, loading } = useAllUsers();
+
+  useEffect(() => getUsers(), [])
+
   return (
-    <Wrap p={{ base: 4, md: 10 }}>
-      <WrapItem>
-        <UserCard imageUrl="https://source.unsplash.com/random" userName="たかぼー" fullName="Takaki Nakamura" />
-      </WrapItem>
-    </Wrap>
+    <>
+    {loading ? (
+      <Center h="100vh">
+        <Spinner />
+      </Center>
+    ) : (
+      <Wrap p={{ base: 4, md: 10 }} justify="center">
+        {users.map((user) => (
+          <WrapItem key={user.id}>
+            <UserCard
+              imageUrl="https://source.unsplash.com/random"
+              userName={user.username}
+              fullName={user.name}
+            />
+          </WrapItem>
+          ))}
+      </Wrap>
+    )}
+    </>
+  );
+});
+```
+
+## ユーザー一覧取得機能の実装
+
++ `src/hooks/useAllUsers.ts`ファイルを作成<br>
+
+```
+/* eslint-disabled react-hooks/exhaustive-deps */
+import axios from "axios";
+import { useCallback, useState } from "react"
+import { User } from "../types/api/user";
+import { useMessage } from "./useMessage";
+
+export const useAllUsers = () => {
+  const { showMessage } = useMessage();
+
+  const [loading, setLoading] = useState<boolean>(false);
+  const [users, setUsers] = useState<Array<User>>([]);
+
+  const getUsers = useCallback(() => {
+    setLoading(true);
+    axios.get<Array<User>>("https://jsonplaceholder.typicode.com/users")
+      .then((res) => setUsers(res.data))
+      .catch(() => {
+        showMessage({ title: "ユーザー取得に失敗しました", status: "error" })
+      })
+      .finally(() => setLoading(false));
+  }, [])
+
+  return { getUsers, loading, users }
+}
+```
+
++ `src/components/pages/UserManagement.tsx`を編集<br>
+
+```
+/* eslint-disabled react-hooks/exhaustive-deps */
+import { Center, Wrap, Spinner, WrapItem } from "@chakra-ui/react";
+import { memo, useEffect, VFC } from "react";
+import { useAllUsers } from "../../hooks/useAllUsers";
+import { UserCard } from "../organisms/user/UserCard";
+
+export const UserManagement: VFC = memo(() => {
+  const { getUsers, users, loading } = useAllUsers();
+
+  useEffect(() => getUsers(), [])
+
+  return (
+    <>
+    {loading ? (
+      <Center h="100vh">
+        <Spinner />
+      </Center>
+    ) : (
+      <Wrap p={{ base: 4, md: 10 }}>
+        {users.map((user) => (
+          <WrapItem key={user.id} mx="atuo">
+            <UserCard
+              imageUrl="https://source.unsplash.com/random"
+              userName={user.username}
+              fullName={user.name}
+            />
+          </WrapItem>
+          ))}
+      </Wrap>
+    )}
+    </>
   );
 });
 ```
