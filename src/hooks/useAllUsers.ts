@@ -1,4 +1,4 @@
-/* eslint-disabled react-hooks/exhaustive-deps */
+/* eslint-disable react-hooks/exhaustive-deps */
 import axios from "axios";
 import { useCallback, useState } from "react"
 import { User } from "../types/api/user";
