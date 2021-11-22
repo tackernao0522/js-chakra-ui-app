@@ -1894,3 +1894,231 @@ export const UserManagement: VFC = memo(() => {
   );
 });
 ```
+
+## ログインユーザー情報をContextに保持してみる
+
++ `src/providers`ディレクトリを作成<br>
+
++ `src/providers/LoginUserProvider.tsx`コンポーネントを作成<br>
+
+```
+import {
+  createContext,
+  Dispatch,
+  ReactNode,
+  SetStateAction,
+  useState
+} from "react";
+import { User } from "../types/api/user";
+
+export type LoginUserContextType = {
+  loginUser: User | null;
+  setLoginUser: Dispatch<SetStateAction<User | null>>;
+};
+
+export const LoginUserContext = createContext<LoginUserContextType>(
+  {} as LoginUserContextType
+);
+
+export const LoginUserProvider = (props: { children: ReactNode }) => {
+  const { children } = props;
+  const [loginUser, setLoginUser] = useState<User | null>(null);
+
+  return (
+    <LoginUserContext.Provider value={{ loginUser, setLoginUser }}>
+      {children}
+    </LoginUserContext.Provider>
+  );
+};
+```
+
++ `src/router/Router.tsx`を編集<br>
+
+```
+import { Route, Switch } from "react-router-dom";
+import { memo, VFC } from "react";
+
+import { Login } from "../components/pages/Login";
+import { HomeRoutes } from "./HomeRoutes";
+import { Page404 } from "../components/pages/Page404";
+import { HeaderLayout } from "../components/templates/HeaderLayout";
+import { LoginUserProvider } from "../providers/LoginUserProvider";
+
+export const Router: VFC = memo(() => {
+  return (
+    <Switch>
+      <LoginUserProvider>
+        <Route exact path="/">
+          <Login />
+        </Route>
+        <Route
+          path="/home"
+          render={({ match: { url } }) =>
+            <Switch>
+              {HomeRoutes.map(route =>
+                <Route
+                  key={route.path}
+                  exact={route.exact}
+                  path={`${url}${route.path}`}
+                >
+                  <HeaderLayout>
+                    {route.children}
+                  </HeaderLayout>
+                </Route>
+              )}
+            </Switch>}
+        />
+        <Route path="*">
+          <Page404 />
+        </Route>
+      </LoginUserProvider>
+    </Switch>
+  );
+});
+```
+
++ `src/hooks/useLoginUser.ts`ファイルを作成<br>
+
+```
+import { useContext } from "react";
+import { LoginUserContext, LoginUserContextType } from "../providers/LoginUserProvider";
+
+export const useLoginUser = (): LoginUserContextType => useContex(LoginUserContext)
+```
+
++ `src/hooks/useAuth.ts`を編集<br>
+
+```
+import axios from "axios";
+import { useCallback, useState } from "react"
+import { useHistory } from "react-router-dom";
+import { User } from "../types/api/user";
+import { useLoginUser } from "./useLoginUser";
+import { useMessage } from "./useMessage";
+
+export const useAuth = () => {
+  const history = useHistory();
+  const { showMessage } = useMessage();
+  const { setLoginUser } = useLoginUser();
+
+  const [loading, setLoading] = useState(false);
+
+  const login = useCallback((id: string) => {
+    setLoading(true);
+
+    axios.get<User>(`https://jsonplaceholder.typicode.com/users/${id}`).then((res) => {
+      if (res.data) {
+        setLoginUser(res.data);
+        showMessage({ title: "ログインしました", status: "success" })
+        history.push("/home");
+      } else {
+        showMessage({ title: "ユーザーが見つかりません", status: "error" })
+        setLoading(false)
+      }
+    })
+      .catch(() => {
+        showMessage({ title: "ユーザーが見つかりません", status: "error" })
+        setLoading(false)
+      });
+  }, [history, showMessage, setLoginUser]);
+  return { login, loading }
+}
+```
+
++ `src/router/Router.tsx`を編集<br>
+
+```
+import { Route, Switch } from "react-router-dom";
+import { memo, VFC } from "react";
+
+import { Login } from "../components/pages/Login";
+import { HomeRoutes } from "./HomeRoutes";
+import { Page404 } from "../components/pages/Page404";
+import { HeaderLayout } from "../components/templates/HeaderLayout";
+import { LoginUserProvider } from "../providers/LoginUserProvider";
+
+export const Router: VFC = memo(() => {
+  return (
+    <Switch>
+      <LoginUserProvider>
+        <Route exact path="/">
+          <Login />
+        </Route>
+        <Route
+          path="/home"
+          render={({ match: { url } }) =>
+            <Switch>
+              {HomeRoutes.map(route =>
+                <Route
+                  key={route.path}
+                  exact={route.exact}
+                  path={`${url}${route.path}`}
+                >
+                  <HeaderLayout>
+                    {route.children}
+                  </HeaderLayout>
+                </Route>
+              )}
+            </Switch>}
+        />
+      </LoginUserProvider>
+        <Route path="*">
+          <Page404 />
+        </Route>
+    </Switch>
+  );
+});
+```
+
++ `src/components/pages/UserManagement.tsx`を編集<br>
+
+```
+/* eslint-disable react-hooks/exhaustive-deps */
+import { Center, Wrap, Spinner, WrapItem, useDisclosure } from "@chakra-ui/react";
+import { memo, useCallback, useEffect, VFC } from "react";
+import { useAllUsers } from "../../hooks/useAllUsers";
+import { useLoginUser } from "../../hooks/useLoginUser";
+import { useSelectUser } from "../../hooks/useSelectUser";
+import { UserCard } from "../organisms/user/UserCard";
+import { UserDetailModal } from "../organisms/user/UserDetailModal";
+
+export const UserManagement: VFC = memo(() => {
+  const { isOpen, onOpen, onClose } = useDisclosure();
+  const { getUsers, users, loading } = useAllUsers();
+  const { onSelectUser, selectedUser } = useSelectUser();
+  const { loginUser } = useLoginUser();
+  console.log(loginUser); // ログインしているユーザーのIDが確認できる
+
+  useEffect(() => getUsers(), [])
+
+  const onClickUser = useCallback((id: number) => {
+    // console.log(id);
+    onSelectUser({ id, users, onOpen })
+  }, [users, onSelectUser, onOpen]);
+
+  return (
+    <>
+    {loading ? (
+      <Center h="100vh">
+        <Spinner />
+      </Center>
+    ) : (
+      <Wrap p={{ base: 4, md: 10 }} justify="center">
+        {users.map((user) => (
+          <WrapItem key={user.id}>
+            <UserCard
+              id={user.id}
+              imageUrl="https://source.unsplash.com/random"
+              userName={user.username}
+              fullName={user.name}
+              onClick={onClickUser}
+            />
+          </WrapItem>
+          ))}
+      </Wrap>
+    )}
+      <UserDetailModal user={selectedUser} isOpen={isOpen} onClose={onClose} />
+    </>
+  );
+});
+```
