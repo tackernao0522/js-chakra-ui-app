@@ -2122,3 +2122,80 @@ export const UserManagement: VFC = memo(() => {
   );
 });
 ```
+
+## 管理者ユーザーを想定してフラグをcontextに保持してみる
+
++ `src/providers/LoginUserProvider.tsx`を編集<br>
+
+```
+import {
+  createContext,
+  Dispatch,
+  ReactNode,
+  SetStateAction,
+  useState
+} from "react";
+import { User } from "../types/api/user";
+
+type LoginUser = User & { isAdmin: boolean } // Userの型に isAdmin: booleanを追加
+
+export type LoginUserContextType = {
+  loginUser: LoginUser | null;
+  setLoginUser: Dispatch<SetStateAction<LoginUser | null>>;
+};
+
+export const LoginUserContext = createContext<LoginUserContextType>(
+  {} as LoginUserContextType
+);
+
+export const LoginUserProvider = (props: { children: ReactNode }) => {
+  const { children } = props;
+  const [loginUser, setLoginUser] = useState<LoginUser | null>(null);
+
+  return (
+    <LoginUserContext.Provider value={{ loginUser, setLoginUser }}>
+      {children}
+    </LoginUserContext.Provider>
+  );
+};
+```
+
++ `src/hooks/useAuth.ts`を編集<br>
+
+```
+import axios from "axios";
+import { useCallback, useState } from "react"
+import { useHistory } from "react-router-dom";
+import { User } from "../types/api/user";
+import { useLoginUser } from "./useLoginUser";
+import { useMessage } from "./useMessage";
+
+export const useAuth = () => {
+  const history = useHistory();
+  const { showMessage } = useMessage();
+  const { setLoginUser } = useLoginUser();
+
+  const [loading, setLoading] = useState(false);
+
+  const login = useCallback((id: string) => {
+    setLoading(true);
+
+    axios.get<User>(`https://jsonplaceholder.typicode.com/users/${id}`).then((res) => {
+      if (res.data) {
+        const isAdmin = res.data.id === 10 ? true : false;
+        setLoginUser({ ...res.data, isAdmin });
+        showMessage({ title: "ログインしました", status: "success" })
+        history.push("/home");
+      } else {
+        showMessage({ title: "ユーザーが見つかりません", status: "error" })
+        setLoading(false)
+      }
+    })
+      .catch(() => {
+        showMessage({ title: "ユーザーが見つかりません", status: "error" })
+        setLoading(false)
+      });
+  }, [history, showMessage, setLoginUser]);
+  return { login, loading }
+}
+```
