@@ -1347,3 +1347,270 @@ export const UserManagement: VFC = memo(() => {
   );
 });
 ```
+
+## ユーザー詳細モーダル画面の作成
+
++ `src/components/pages/UserManagement.tsx`を編集<br>
+
+```
+/* eslint-disabled react-hooks/exhaustive-deps */
+import { Center, Wrap, Spinner, WrapItem, Modal, ModalContent, ModalOverlay, useDisclosure } from "@chakra-ui/react";
+import { memo, useEffect, VFC } from "react";
+import { useAllUsers } from "../../hooks/useAllUsers";
+import { UserCard } from "../organisms/user/UserCard";
+
+export const UserManagement: VFC = memo(() => {
+  const { isOpen, onOpen, onClose } = useDisclosure();
+  const { getUsers, users, loading } = useAllUsers();
+
+  useEffect(() => getUsers(), [])
+
+  const onClickUser = useCallback(() => onOpen(), []);
+
+  return (
+    <>
+    {loading ? (
+      <Center h="100vh">
+        <Spinner />
+      </Center>
+    ) : (
+      <Wrap p={{ base: 4, md: 10 }} justify="center">
+        {users.map((user) => (
+          <WrapItem key={user.id}>
+            <UserCard
+              imageUrl="https://source.unsplash.com/random"
+              userName={user.username}
+              fullName={user.name}
+              onClick={onClickUser}
+            />
+          </WrapItem>
+          ))}
+      </Wrap>
+    )}
+    <Modal isOpen={isOpen} onClose={onClose}>
+      <ModalOverlay />
+      <ModalContent>
+        <p>テスト</p>
+      </ModalContent>
+    </Modal>
+    </>
+  );
+});
+```
+
++ `src/components/organisms/user/UserCard.tsx`を編集<br>
+
+```
+import { Image } from "@chakra-ui/image";
+import { Box, Stack, Text } from "@chakra-ui/layout";
+import { memo, VFC } from "react";
+
+type Props = {
+  imageUrl: string;
+  userName: string;
+  fullName: string;
+  onClick: () => void;
+};
+
+export const UserCard: VFC<Props> = memo(props => {
+  const { imageUrl, userName, fullName, onClick } = props;
+
+  return (
+    <Box
+      w="260px"
+      h="260px"
+      bg="white"
+      borderRadius="10px"
+      shadow="md"
+      p={4}
+      _hover={{ cursor: "pointer", opacity: 0.8 }}
+      onClick={onClick}
+    >
+      <Stack textAlign="center">
+        <Image
+          borderRadius="full"
+          boxSize="160px"
+          src={imageUrl}
+          alt={userName}
+          m="auto"
+        />
+        <Text fontSize="lg" fontWeight="bold">
+          {userName}
+        </Text>
+        <Text fontSize="sm" color="gray">
+          {fullName}
+        </Text>
+      </Stack>
+    </Box>
+  );
+});
+```
+
++ `src/components/pages/UserManagement.tsx`を再編集<br>
+
+```
+/* eslint-disabled react-hooks/exhaustive-deps */
+import { Center, FormControl, FormLabel, Input, Wrap, Spinner, Stack, WrapItem, Modal, ModalContent, ModalOverlay, useDisclosure, ModalHeader, ModalCloseButton, ModalBody } from "@chakra-ui/react";
+import { memo, useCallback, useEffect, VFC } from "react";
+import { useAllUsers } from "../../hooks/useAllUsers";
+import { UserCard } from "../organisms/user/UserCard";
+
+export const UserManagement: VFC = memo(() => {
+  const { isOpen, onOpen, onClose } = useDisclosure();
+  const { getUsers, users, loading } = useAllUsers();
+
+  useEffect(() => getUsers(), [])
+
+  const onClickUser = useCallback(() => onOpen(), []);
+
+  return (
+    <>
+    {loading ? (
+      <Center h="100vh">
+        <Spinner />
+      </Center>
+    ) : (
+      <Wrap p={{ base: 4, md: 10 }} justify="center">
+        {users.map((user) => (
+          <WrapItem key={user.id}>
+            <UserCard
+              imageUrl="https://source.unsplash.com/random"
+              userName={user.username}
+              fullName={user.name}
+              onClick={onClickUser}
+            />
+          </WrapItem>
+          ))}
+      </Wrap>
+    )}
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      autoFocus={false}
+      motionPreset="slideInBottom"
+    >
+      <ModalOverlay />
+      <ModalContent pb={6}>
+        <ModalHeader>ユーザー詳細</ModalHeader>
+        <ModalCloseButton />
+        <ModalBody mx={4}>
+          <Stack spacing={4}>
+            <FormControl>
+              <FormLabel>名前</FormLabel>
+              <Input value="たかき" isReadOnly />
+            </FormControl>
+            <FormControl>
+              <FormLabel>フルネーム</FormLabel>
+              <Input value="Takaki Nakamura" isReadOnly />
+            </FormControl>
+            <FormControl>
+              <FormLabel>MAIL</FormLabel>
+              <Input value="1234@example.com" isReadOnly />
+            </FormControl>
+            <FormControl>
+              <FormLabel>TEL</FormLabel>
+              <Input value="090-1111-2222" isReadOnly />
+            </FormControl>
+          </Stack>
+        </ModalBody>
+      </ModalContent>
+    </Modal>
+    </>
+  );
+});
+```
+
++ `src/components/organisms/user/UserDetailModal.tsx`コンポーネントを作成<br>
+
+```
+import { FormControl, FormLabel, Input, Modal, ModalBody, ModalCloseButton, ModalContent, ModalHeader, ModalOverlay, Stack } from "@chakra-ui/react";
+import { memo, VFC } from "react";
+
+type Props = {
+  isOpen: boolean;
+  onClose: () => void;
+};
+
+export const UserDetailModal: VFC<Props> = memo(props => {
+  const { isOpen, onClose } = props;
+
+  return (
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      autoFocus={false}
+      motionPreset="slideInBottom"
+    >
+      <ModalOverlay />
+      <ModalContent pb={6}>
+        <ModalHeader>ユーザー詳細</ModalHeader>
+        <ModalCloseButton />
+        <ModalBody mx={4}>
+          <Stack spacing={4}>
+            <FormControl>
+              <FormLabel>名前</FormLabel>
+              <Input value="たかき" isReadOnly />
+            </FormControl>
+            <FormControl>
+              <FormLabel>フルネーム</FormLabel>
+              <Input value="Takaki Nakamura" isReadOnly />
+            </FormControl>
+            <FormControl>
+              <FormLabel>MAIL</FormLabel>
+              <Input value="1234@example.com" isReadOnly />
+            </FormControl>
+            <FormControl>
+              <FormLabel>TEL</FormLabel>
+              <Input value="090-1111-2222" isReadOnly />
+            </FormControl>
+          </Stack>
+        </ModalBody>
+      </ModalContent>
+    </Modal>
+  );
+});
+```
+
++ `src/components/pages/UserManagement.tsx`を編集<br>
+
+```
+/* eslint-disabled react-hooks/exhaustive-deps */
+import { Center, Wrap, Spinner, WrapItem, useDisclosure } from "@chakra-ui/react";
+import { memo, useCallback, useEffect, VFC } from "react";
+import { useAllUsers } from "../../hooks/useAllUsers";
+import { UserCard } from "../organisms/user/UserCard";
+import { UserDetailModal } from "../organisms/user/UserDetailModal";
+
+export const UserManagement: VFC = memo(() => {
+  const { isOpen, onOpen, onClose } = useDisclosure();
+  const { getUsers, users, loading } = useAllUsers();
+
+  useEffect(() => getUsers(), [])
+
+  const onClickUser = useCallback(() => onOpen(), []);
+
+  return (
+    <>
+    {loading ? (
+      <Center h="100vh">
+        <Spinner />
+      </Center>
+    ) : (
+      <Wrap p={{ base: 4, md: 10 }} justify="center">
+        {users.map((user) => (
+          <WrapItem key={user.id}>
+            <UserCard
+              imageUrl="https://source.unsplash.com/random"
+              userName={user.username}
+              fullName={user.name}
+              onClick={onClickUser}
+            />
+          </WrapItem>
+          ))}
+      </Wrap>
+    )}
+      <UserDetailModal isOpen={isOpen} onClose={onClose} />
+    </>
+  );
+});
+```
