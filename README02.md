@@ -1614,3 +1614,283 @@ export const UserManagement: VFC = memo(() => {
   );
 });
 ```
+
+## ユーザー詳細モーダル機能の実装
+
++ `src/components/organisms/user/UserCard.tsx`を編集<br>
+
+```
+import { Image } from "@chakra-ui/image";
+import { Box, Stack, Text } from "@chakra-ui/layout";
+import { memo, VFC } from "react";
+
+type Props = {
+  id: number;
+  imageUrl: string;
+  userName: string;
+  fullName: string;
+  onClick: (id: number) => void;
+};
+
+export const UserCard: VFC<Props> = memo(props => {
+  const { id, imageUrl, userName, fullName, onClick } = props;
+
+  return (
+    <Box
+      w="260px"
+      h="260px"
+      bg="white"
+      borderRadius="10px"
+      shadow="md"
+      p={4}
+      _hover={{ cursor: "pointer", opacity: 0.8 }}
+      onClick={() => onClick(id)}
+    >
+      <Stack textAlign="center">
+        <Image
+          borderRadius="full"
+          boxSize="160px"
+          src={imageUrl}
+          alt={userName}
+          m="auto"
+        />
+        <Text fontSize="lg" fontWeight="bold">
+          {userName}
+        </Text>
+        <Text fontSize="sm" color="gray">
+          {fullName}
+        </Text>
+      </Stack>
+    </Box>
+  );
+});
+```
+
++ `src/components/pages/UserManagement.tsx`を編集<br>
+
+```
+/* eslint-disabled react-hooks/exhaustive-deps */
+import { Center, Wrap, Spinner, WrapItem, useDisclosure } from "@chakra-ui/react";
+import { memo, useCallback, useEffect, VFC } from "react";
+import { useAllUsers } from "../../hooks/useAllUsers";
+import { UserCard } from "../organisms/user/UserCard";
+import { UserDetailModal } from "../organisms/user/UserDetailModal";
+
+export const UserManagement: VFC = memo(() => {
+  const { isOpen, onOpen, onClose } = useDisclosure();
+  const { getUsers, users, loading } = useAllUsers();
+
+  useEffect(() => getUsers(), [])
+
+  const onClickUser = useCallback((id: number) => {
+    console.log(id); // user.idが取得できるか確認
+    onOpen()
+  }, []);
+
+  return (
+    <>
+    {loading ? (
+      <Center h="100vh">
+        <Spinner />
+      </Center>
+    ) : (
+      <Wrap p={{ base: 4, md: 10 }} justify="center">
+        {users.map((user) => (
+          <WrapItem key={user.id}>
+            <UserCard
+              id={user.id}
+              imageUrl="https://source.unsplash.com/random"
+              userName={user.username}
+              fullName={user.name}
+              onClick={onClickUser}
+            />
+          </WrapItem>
+          ))}
+      </Wrap>
+    )}
+      <UserDetailModal isOpen={isOpen} onClose={onClose} />
+    </>
+  );
+});
+```
+
++ `src/hooks/useSelectUser.ts`ファイルを作成<br>
+
+```
+import { useCallback, useState } from "react"
+import { User } from "../types/api/user";
+
+type Props = {
+  id: number;
+  users: Array<User>
+  onOpen: () => void;
+}
+
+// 選択したユーザー情報を特定しモーダルを表示するカスタムフック
+export const useSelectUser = () => {
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+
+  const onSelectUser = useCallback((props: Props) => {
+    const { id, users, onOpen } = props;
+    const targetUser = users.find(user => user.id === id)
+    // setSelectedUser(targetUser ?? null) // tragetUserがundefindだったらnullを設定する(??は左辺がundefindまたはnullなら右辺を実行)
+    setSelectedUser(targetUser!); // undefinedの可能性をなくす
+    onOpen()
+  }, [])
+  return { onSelectUser, selectedUser }
+}
+```
+
++ `src/components/pages/UserManagement.tsx`を編集<br>
+
+```
+/* eslint-disabled react-hooks/exhaustive-deps */
+import { Center, Wrap, Spinner, WrapItem, useDisclosure } from "@chakra-ui/react";
+import { memo, useCallback, useEffect, VFC } from "react";
+import { useAllUsers } from "../../hooks/useAllUsers";
+import { useSelectUser } from "../../hooks/useSelectUser";
+import { UserCard } from "../organisms/user/UserCard";
+import { UserDetailModal } from "../organisms/user/UserDetailModal";
+
+export const UserManagement: VFC = memo(() => {
+  const { isOpen, onOpen, onClose } = useDisclosure();
+  const { getUsers, users, loading } = useAllUsers();
+  const { onSelectUser, selectedUser } = useSelectUser();
+  console.log(selectedUser);
+
+  useEffect(() => getUsers(), [])
+
+  const onClickUser = useCallback((id: number) => {
+    console.log(id);
+    onSelectUser({ id, users, onOpen })
+  }, [users]);
+
+  return (
+    <>
+    {loading ? (
+      <Center h="100vh">
+        <Spinner />
+      </Center>
+    ) : (
+      <Wrap p={{ base: 4, md: 10 }} justify="center">
+        {users.map((user) => (
+          <WrapItem key={user.id}>
+            <UserCard
+              id={user.id}
+              imageUrl="https://source.unsplash.com/random"
+              userName={user.username}
+              fullName={user.name}
+              onClick={onClickUser}
+            />
+          </WrapItem>
+          ))}
+      </Wrap>
+    )}
+      <UserDetailModal isOpen={isOpen} onClose={onClose} />
+    </>
+  );
+});
+```
+
++ `src/components/organisms/user/UserDetailModal.tsx`を編集<br>
+
+```
+import { FormControl, FormLabel, Input, Modal, ModalBody, ModalCloseButton, ModalContent, ModalHeader, ModalOverlay, Stack } from "@chakra-ui/react";
+import { memo, VFC } from "react";
+import { User } from "../../../types/api/user";
+
+type Props = {
+  user: User | null;
+  isOpen: boolean;
+  onClose: () => void;
+};
+
+export const UserDetailModal: VFC<Props> = memo(props => {
+  const { user, isOpen, onClose } = props;
+
+  return (
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      autoFocus={false}
+      motionPreset="slideInBottom"
+    >
+      <ModalOverlay />
+      <ModalContent pb={6}>
+        <ModalHeader>ユーザー詳細</ModalHeader>
+        <ModalCloseButton />
+        <ModalBody mx={4}>
+          <Stack spacing={4}>
+            <FormControl>
+              <FormLabel>名前</FormLabel>
+              <Input value={user?.username} isReadOnly />
+            </FormControl>
+            <FormControl>
+              <FormLabel>フルネーム</FormLabel>
+              <Input value={user?.name} isReadOnly />
+            </FormControl>
+            <FormControl>
+              <FormLabel>MAIL</FormLabel>
+              <Input value={user?.email} isReadOnly />
+            </FormControl>
+            <FormControl>
+              <FormLabel>TEL</FormLabel>
+              <Input value={user?.phone} isReadOnly />
+            </FormControl>
+          </Stack>
+        </ModalBody>
+      </ModalContent>
+    </Modal>
+  );
+});
+```
+
++ `src/components/pages/UserManagement.tsx`を編集<br>
+
+```
+/* eslint-disabled react-hooks/exhaustive-deps */
+import { Center, Wrap, Spinner, WrapItem, useDisclosure } from "@chakra-ui/react";
+import { memo, useCallback, useEffect, VFC } from "react";
+import { useAllUsers } from "../../hooks/useAllUsers";
+import { useSelectUser } from "../../hooks/useSelectUser";
+import { UserCard } from "../organisms/user/UserCard";
+import { UserDetailModal } from "../organisms/user/UserDetailModal";
+
+export const UserManagement: VFC = memo(() => {
+  const { isOpen, onOpen, onClose } = useDisclosure();
+  const { getUsers, users, loading } = useAllUsers();
+  const { onSelectUser, selectedUser } = useSelectUser();
+
+  useEffect(() => getUsers(), [])
+
+  const onClickUser = useCallback((id: number) => {
+    // console.log(id);
+    onSelectUser({ id, users, onOpen })
+  }, [users, onSelectUser, onOpen]);
+
+  return (
+    <>
+    {loading ? (
+      <Center h="100vh">
+        <Spinner />
+      </Center>
+    ) : (
+      <Wrap p={{ base: 4, md: 10 }} justify="center">
+        {users.map((user) => (
+          <WrapItem key={user.id}>
+            <UserCard
+              id={user.id}
+              imageUrl="https://source.unsplash.com/random"
+              userName={user.username}
+              fullName={user.name}
+              onClick={onClickUser}
+            />
+          </WrapItem>
+          ))}
+      </Wrap>
+    )}
+      <UserDetailModal user={selectedUser} isOpen={isOpen} onClose={onClose} />
+    </>
+  );
+});
+```
