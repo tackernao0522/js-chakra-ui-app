@@ -2199,3 +2199,137 @@ export const useAuth = () => {
   return { login, loading }
 }
 ```
+
+## 管理者ユーザーのみユーザー情報を編集できる導線の作成
+
++ `src/components/organisims/user/UserDetailModal.tsx`を編集<br>
+
+```
+import { FormControl, FormLabel, Input, Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay, Stack } from "@chakra-ui/react";
+import { ChangeEvent, memo, useEffect, useState, VFC } from "react";
+import { User } from "../../../types/api/user";
+import { PrimaryButton } from "../../atoms/button/PrimaryButton";
+
+type Props = {
+  user: User | null;
+  isOpen: boolean;
+  isAdmin?: boolean;
+  onClose: () => void;
+};
+
+export const UserDetailModal: VFC<Props> = memo(props => {
+  const { user, isOpen, isAdmin = false, onClose } = props;
+
+  const [username, setUsername] = useState('');
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+
+  useEffect(() => {
+    setUsername(user?.username ?? '')
+    setName(user?.name ?? '')
+    setEmail(user?.email ?? '')
+    setPhone(user?.phone ?? '')
+  }, [user])
+
+  const onChangeUserName = (e: ChangeEvent<HTMLInputElement>) => setUsername(e.target.value)
+  const onChangeName = (e: ChangeEvent<HTMLInputElement>) => setName(e.target.value)
+  const onChangeEmail = (e: ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)
+  const onChangePhone = (e: ChangeEvent<HTMLInputElement>) => setPhone(e.target.value)
+
+  const onClickUpdate = () => alert()
+
+  return (
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      autoFocus={false}
+      motionPreset="slideInBottom"
+    >
+      <ModalOverlay />
+      <ModalContent pb={2}>
+        <ModalHeader>ユーザー詳細</ModalHeader>
+        <ModalCloseButton />
+        <ModalBody mx={4}>
+          <Stack spacing={4}>
+            <FormControl>
+              <FormLabel>名前</FormLabel>
+              <Input value={username} onChange={onChangeUserName} isReadOnly={!isAdmin} />
+            </FormControl>
+            <FormControl>
+              <FormLabel>フルネーム</FormLabel>
+              <Input value={name} onChange={onChangeName} isReadOnly={!isAdmin} />
+            </FormControl>
+            <FormControl>
+              <FormLabel>MAIL</FormLabel>
+              <Input value={email} onChange={onChangeEmail} isReadOnly={!isAdmin} />
+            </FormControl>
+            <FormControl>
+              <FormLabel>TEL</FormLabel>
+              <Input value={phone} onChange={onChangePhone} isReadOnly={!isAdmin} />
+            </FormControl>
+          </Stack>
+        </ModalBody>
+        {isAdmin && (
+          <ModalFooter>
+            <PrimaryButton onClick={onClickUpdate}>更新</PrimaryButton>
+          </ModalFooter>
+        )}
+      </ModalContent>
+    </Modal>
+  );
+});
+```
+
++ `src/components/pages/UserManagement.tsx`を編集<br>
+
+```
+/* eslint-disable react-hooks/exhaustive-deps */
+import { Center, Wrap, Spinner, WrapItem, useDisclosure } from "@chakra-ui/react";
+import { memo, useCallback, useEffect, VFC } from "react";
+import { useAllUsers } from "../../hooks/useAllUsers";
+import { useLoginUser } from "../../hooks/useLoginUser";
+import { useSelectUser } from "../../hooks/useSelectUser";
+import { UserCard } from "../organisms/user/UserCard";
+import { UserDetailModal } from "../organisms/user/UserDetailModal";
+
+export const UserManagement: VFC = memo(() => {
+  const { isOpen, onOpen, onClose } = useDisclosure();
+  const { getUsers, users, loading } = useAllUsers();
+  const { onSelectUser, selectedUser } = useSelectUser();
+  const { loginUser } = useLoginUser();
+  // console.log(loginUser);
+
+  useEffect(() => getUsers(), [])
+
+  const onClickUser = useCallback((id: number) => {
+    // console.log(id);
+    onSelectUser({ id, users, onOpen })
+  }, [users, onSelectUser, onOpen]);
+
+  return (
+    <>
+    {loading ? (
+      <Center h="100vh">
+        <Spinner />
+      </Center>
+    ) : (
+      <Wrap p={{ base: 4, md: 10 }} justify="center">
+        {users.map((user) => (
+          <WrapItem key={user.id}>
+            <UserCard
+              id={user.id}
+              imageUrl="https://source.unsplash.com/random"
+              userName={user.username}
+              fullName={user.name}
+              onClick={onClickUser}
+            />
+          </WrapItem>
+          ))}
+      </Wrap>
+    )}
+      <UserDetailModal user={selectedUser} isOpen={isOpen} isAdmin={loginUser?.isAdmin} onClose={onClose} />
+    </>
+  );
+});
+```
