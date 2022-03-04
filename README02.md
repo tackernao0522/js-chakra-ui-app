@@ -2226,7 +2226,7 @@ export const UserDetailModal: VFC<Props> = memo(props => {
   const [phone, setPhone] = useState('');
 
   useEffect(() => {
-    setUsername(user?.username ?? '')
+    setUsername(user?.username ?? '') // ?? は undefindの場合の意味で '' 空にする
     setName(user?.name ?? '')
     setEmail(user?.email ?? '')
     setPhone(user?.phone ?? '')
