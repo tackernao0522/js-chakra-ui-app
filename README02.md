@@ -1015,7 +1015,7 @@ export const PrimaryButton: VFC<Props> = memo(props => {
       bg="teal.400"
       color="white"
       _hover={{ opacity: 0.8 }}
-      disabled={disabled || loading}
+      isDisabled={disabled || loading}
       isLoading={loading}
       onClick={onClick}
     >
